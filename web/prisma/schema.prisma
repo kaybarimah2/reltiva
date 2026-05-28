@@ -1,0 +1,249 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  BUYER
+  AGENT
+  ADMIN
+}
+
+enum PropertyStatus {
+  AVAILABLE
+  UNDER_OFFER
+  SOLD
+  RENTED
+}
+
+enum PropertyType {
+  APARTMENT
+  HOUSE
+  LAND
+  COMMERCIAL
+  COMPOUND_HOUSE
+  BOYS_QUARTERS
+  CHAMBER_AND_HALL
+}
+
+enum ListingType {
+  SALE
+  RENT
+}
+
+enum SubscriptionPlan {
+  FREE
+  BASIC
+  PRO
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+model User {
+  id                 String               @id @default(uuid())
+  name               String
+  email              String               @unique
+  password           String?              // Nullable for OAuth accounts
+  role               Role                 @default(BUYER)
+  phone              String?
+  avatar             String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  // Relations
+  profile            Profile?
+  properties         Property[]           // As listing agent
+  savedProperties    SavedProperty[]
+  sentEnquiries      Enquiry[]            @relation("SenderEnquiries")
+  receivedEnquiries  Enquiry[]            @relation("AgentEnquiries")
+  alerts             Alert[]
+  subscriptions      Subscription[]
+  reviewsWritten     Review[]             @relation("Reviewer")
+  reviewsReceived    Review[]             @relation("AgentReviews")
+  reportsSubmitted   Report[]
+  passwordResetToken PasswordResetToken[]
+  accounts           Account[]
+  sessions           Session[]
+}
+
+// NextAuth standard support for Google OAuth
+model Account {
+  id                 String  @id @default(uuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Profile {
+  id            String  @id @default(uuid())
+  userId        String  @unique
+  bio           String? @db.Text
+  agency        String?
+  licenseNumber String?
+  yearsExp      Int?    @default(0)
+  verified      Boolean @default(false)
+  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Property {
+  id           String            @id @default(uuid())
+  title        String
+  description  String            @db.Text
+  price        Float
+  currency     String            @default("GHS")
+  type         PropertyType
+  listingType  ListingType
+  status       PropertyStatus    @default(AVAILABLE)
+  bedrooms     Int               @default(0)
+  bathrooms    Float             @default(0)
+  toilets      Int               @default(0)
+  size         Float?            // size in sqm
+  region       String            // e.g. "Greater Accra"
+  city         String            // e.g. "Accra"
+  neighborhood String            // e.g. "East Legon"
+  address      String
+  latitude     Float?
+  longitude    Float?
+  agentId      String
+  featured     Boolean           @default(false)
+  verified     Boolean           @default(false)
+  viewCount    Int               @default(0)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  // Relations
+  agent        User              @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  images       PropertyImage[]
+  amenities    PropertyAmenity[]
+  savedByUsers SavedProperty[]
+  enquiries    Enquiry[]
+  reports      Report[]
+}
+
+model PropertyImage {
+  id         String   @id @default(uuid())
+  propertyId String
+  url        String
+  order      Int      @default(0)
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+}
+
+model Amenity {
+  id         String            @id @default(uuid())
+  name       String            @unique
+  icon       String?           // Lucide icon name
+  properties PropertyAmenity[]
+}
+
+model PropertyAmenity {
+  propertyId String
+  amenityId  String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  amenity    Amenity  @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+
+  @@id([propertyId, amenityId])
+}
+
+model SavedProperty {
+  userId     String
+  propertyId String
+  savedAt    DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@id([userId, propertyId])
+}
+
+model Enquiry {
+  id         String   @id @default(uuid())
+  propertyId String
+  senderId   String
+  agentId    String
+  message    String   @db.Text
+  status     String   @default("NEW") // "NEW", "READ", "REPLIED"
+  createdAt  DateTime @default(now())
+
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  sender     User     @relation("SenderEnquiries", fields: [senderId], references: [id], onDelete: Cascade)
+  agent      User     @relation("AgentEnquiries", fields: [agentId], references: [id], onDelete: Cascade)
+}
+
+model Alert {
+  id        String   @id @default(uuid())
+  userId    String
+  filters   Json
+  frequency String
+  lastSent  DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Subscription {
+  id          String             @id @default(uuid())
+  userId      String
+  plan        SubscriptionPlan   @default(FREE)
+  status      SubscriptionStatus @default(ACTIVE)
+  startDate   DateTime           @default(now())
+  endDate     DateTime?
+  paystackRef String?            @unique
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id          String   @id @default(uuid())
+  agentId     String
+  reviewerId  String
+  rating      Int      @default(5)
+  comment     String   @db.Text
+  createdAt   DateTime @default(now())
+
+  agent       User     @relation("AgentReviews", fields: [agentId], references: [id], onDelete: Cascade)
+  reviewer    User     @relation("Reviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
+}
+
+model Report {
+  id          String   @id @default(uuid())
+  propertyId  String
+  reporterId  String
+  reason      String   @db.Text
+  status      String   @default("PENDING") // "PENDING", "RESOLVED", "DISMISSED"
+  createdAt   DateTime @default(now())
+
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  reporter    User     @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
