@@ -10,7 +10,6 @@ import {
   Briefcase,
   Users,
   Compass,
-  Search,
   BedDouble,
   Bath,
   ArrowRight,
@@ -20,6 +19,7 @@ import {
   CheckCircle
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface PropertyImage {
   id: string;
@@ -72,8 +72,22 @@ export default function HomeClient({
   recentProperties,
   topAgents
 }: HomeClientProps) {
+  const router = useRouter();
   const [location, setLocation] = useState("");
+  const [searchTab, setSearchTab] = useState<"buy" | "rent" | "sold">("buy");
   const [savedIds, setSavedIds] = useState<string[]>([]);
+
+  const handleSearch = () => {
+    let url = `/search?location=${encodeURIComponent(location)}`;
+    if (searchTab === "buy") {
+      url += "&type=SALE";
+    } else if (searchTab === "rent") {
+      url += "&type=RENT";
+    } else if (searchTab === "sold") {
+      url += "&type=SALE&status=SOLD";
+    }
+    router.push(url);
+  };
 
   // Toggle saving listings locally for guests
   const toggleSave = (id: string) => {
@@ -136,34 +150,117 @@ export default function HomeClient({
           </div>
 
           {/* Clean Rightmove search box */}
-          <div className="bg-white/10 backdrop-blur-md p-4 rounded-xl shadow-2xl border border-white/20 max-w-2xl mx-auto space-y-4">
-            <div className="relative flex items-center bg-white rounded-lg overflow-hidden border border-gray-300 shadow-sm focus-within:ring-2 focus-within:ring-brand-green transition-all">
-              <div className="pl-4 text-gray-400">
-                <Search className="h-5 w-5" />
+          <div className="bg-white p-6 rounded-xl shadow-2xl max-w-2xl w-full mx-auto text-left space-y-4">
+            {/* Tabs List */}
+            <div className="border-b border-gray-100 pb-2">
+              <div className="flex gap-6" role="tablist">
+                <button
+                  role="tab"
+                  aria-selected={searchTab === "buy"}
+                  onClick={() => setSearchTab("buy")}
+                  data-id="buy"
+                  data-monitor-testid="for-sale-tab"
+                  className={`pb-2 text-[15px] font-extrabold transition-all border-b-2 focus:outline-none ${
+                    searchTab === "buy"
+                      ? "border-brand-green text-brand-navy"
+                      : "border-transparent text-gray-500 hover:text-brand-navy"
+                  }`}
+                >
+                  Buy
+                </button>
+                <button
+                  role="tab"
+                  aria-selected={searchTab === "rent"}
+                  onClick={() => setSearchTab("rent")}
+                  data-id="rent"
+                  data-monitor-testid="to-rent-tab"
+                  className={`pb-2 text-[15px] font-extrabold transition-all border-b-2 focus:outline-none ${
+                    searchTab === "rent"
+                      ? "border-brand-green text-brand-navy"
+                      : "border-transparent text-gray-500 hover:text-brand-navy"
+                  }`}
+                >
+                  Rent
+                </button>
+                <button
+                  role="tab"
+                  aria-selected={searchTab === "sold"}
+                  onClick={() => setSearchTab("sold")}
+                  data-id="sold"
+                  data-monitor-testid="sold-prices-tab"
+                  className={`pb-2 text-[15px] font-extrabold transition-all border-b-2 focus:outline-none ${
+                    searchTab === "sold"
+                      ? "border-brand-green text-brand-navy"
+                      : "border-transparent text-gray-500 hover:text-brand-navy"
+                  }`}
+                >
+                  Sold
+                </button>
               </div>
-              <input
-                type="text"
-                placeholder="Enter a location, neighborhood or city in Ghana..."
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="w-full px-3 py-4 bg-transparent text-brand-navy font-bold placeholder-gray-500 text-base focus:outline-none"
-              />
             </div>
 
-            {/* Twin Search Buttons */}
-            <div className="grid grid-cols-2 gap-4">
-              <Link
-                href={`/search?type=SALE&location=${encodeURIComponent(location)}`}
-                className="flex items-center justify-center bg-brand-green hover:bg-brand-green-hover text-white font-extrabold py-3.5 px-6 rounded-lg text-base shadow-md transition-all text-center"
-              >
-                For sale
-              </Link>
-              <Link
-                href={`/search?type=RENT&location=${encodeURIComponent(location)}`}
-                className="flex items-center justify-center bg-brand-green hover:bg-brand-green-hover text-white font-extrabold py-3.5 px-6 rounded-lg text-base shadow-md transition-all text-center"
-              >
-                To rent
-              </Link>
+            {/* Tab Panel */}
+            <div role="tabpanel" id={`panel-${searchTab}`} aria-labelledby={`tab-${searchTab}`} className="space-y-4">
+              <h2 className="text-[17px] font-extrabold text-brand-navy">
+                {searchTab === "buy"
+                  ? "Search properties to buy"
+                  : searchTab === "rent"
+                  ? "Search properties to rent"
+                  : "Search sold house prices"}
+              </h2>
+
+              <div className="flex flex-col sm:flex-row gap-3 items-stretch">
+                <div data-testid="search-panel-typeahead" className="flex-1 relative flex items-center bg-white rounded-lg border border-gray-300 shadow-sm focus-within:ring-2 focus-within:ring-brand-green focus-within:border-brand-green transition-all">
+                  <span aria-hidden="true" className="pl-4 text-gray-450">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path
+                        fill="currentColor"
+                        fillRule="evenodd"
+                        d="M14.1922 15.6064C13.0236 16.4816 11.5723 17 10 17c-3.866 0-7-3.134-7-7s3.134-7 7-7 7 3.134 7 7c0 1.5723-.5184 3.0236-1.3936 4.1922l5.1007 5.1007c.3905.3905.3905 1.0237 0 1.4142s-1.0237.3905-1.4142 0zM15 10c0 2.7614-2.2386 5-5 5s-5-2.2386-5-5 2.2386-5 5-5 5 2.2386 5 5"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </span>
+                  <input
+                    id="ta_searchInput"
+                    name="locationSearch"
+                    type="text"
+                    maxLength={100}
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleSearch();
+                      }
+                    }}
+                    className="w-full px-3 py-3.5 bg-transparent text-brand-navy font-bold placeholder-gray-405 text-base focus:outline-none"
+                    placeholder={
+                      searchTab === "buy"
+                        ? "e.g. East Legon, Airport Residential or Cantonments"
+                        : searchTab === "rent"
+                        ? "e.g. Osu, Labone or Dzorwulu"
+                        : "e.g. Accra, Kumasi or Tema"
+                    }
+                    data-testid="typeahead-searchbox"
+                    data-monitor-testid={`${searchTab}-search-input`}
+                    autoComplete="off"
+                  />
+                </div>
+
+                <div className="ta_homepageControls flex">
+                  <button
+                    type="button"
+                    onClick={handleSearch}
+                    id="rmds_light-theme"
+                    title="Search"
+                    data-testid="searchCta"
+                    data-monitor-testid={`${searchTab}-search-button`}
+                    className="w-full sm:w-auto bg-brand-green hover:bg-brand-green-hover text-white font-extrabold py-3.5 px-8 rounded-lg text-base shadow-md transition-colors flex items-center justify-center whitespace-nowrap"
+                  >
+                    <span>Search</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
