@@ -72,14 +72,10 @@ export default function HomeClient({
   recentProperties,
   topAgents
 }: HomeClientProps) {
-  const [searchTab, setSearchTab] = useState<"BUY" | "RENT" | "DEVELOPMENTS">("BUY");
   const [location, setLocation] = useState("");
-  const [propertyType, setPropertyType] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
-  const [bedrooms, setBedrooms] = useState("");
   const [savedIds, setSavedIds] = useState<string[]>([]);
 
-  // Simple client-side toggle for saved properties (guests save to state or localStorage)
+  // Toggle saving listings locally for guests
   const toggleSave = (id: string) => {
     let updated: string[];
     if (savedIds.includes(id)) {
@@ -106,145 +102,100 @@ export default function HomeClient({
     }
   }, []);
 
+  const formatPropertyTitle = (bedrooms: number, type: string, listingType: string) => {
+    const typeLabel = type.replace("_", " ").toLowerCase();
+    const actionLabel = listingType === "SALE" ? "for sale" : "to rent";
+    if (type === "LAND") {
+      return `Premium land ${actionLabel}`;
+    }
+    return `${bedrooms > 0 ? `${bedrooms} bedroom ` : ""}${typeLabel} ${actionLabel}`;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
       <Navbar />
 
-      {/* Hero Section */}
-      <section className="relative h-[600px] flex items-center justify-center overflow-hidden bg-gray-900">
+      {/* Hero Search Section - Mimicking Rightmove "Find your happy" */}
+      <section className="relative h-[520px] flex items-center justify-center overflow-hidden bg-brand-navy">
         <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 scale-105 transition-all duration-[10s]"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 scale-100"
           style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1600')",
+            backgroundImage: "url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1600')",
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-gray-950/80 via-transparent to-gray-950/40" />
+        <div className="absolute inset-0 bg-gradient-to-t from-brand-navy/90 via-brand-navy/35 to-brand-navy/60" />
 
-        <div className="relative z-10 max-w-4xl w-full px-4 text-center space-y-6">
-          <div className="space-y-3">
-            <span className="inline-block bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-semibold px-4 py-1.5 rounded-full text-xs uppercase tracking-wider">
-              Affordable Housing Platform for Ghana
-            </span>
-            <h1 className="text-4xl sm:text-6xl font-black text-white tracking-tight leading-tight">
-              Find Your Perfect Home in Ghana
+        <div className="relative z-10 max-w-3xl w-full px-4 text-center space-y-8">
+          <div className="space-y-2">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight text-shadow-sm">
+              Find your happy.
             </h1>
-            <p className="text-lg sm:text-xl text-gray-200 max-w-xl mx-auto font-medium">
-              Rent, buy, or list properties with transparent pricing in Ghana Cedis (GHS).
+            <p className="text-base sm:text-lg md:text-xl text-gray-200 font-medium max-w-md mx-auto">
+              Search properties for sale and to rent in Ghana
             </p>
           </div>
 
-          {/* Search Panel Container */}
-          <div className="bg-white/95 backdrop-blur-md rounded-3xl p-4 sm:p-6 shadow-2xl border border-white/20 text-left max-w-3xl mx-auto">
-            {/* Search Tabs */}
-            <div className="flex gap-2 mb-4 border-b border-gray-100 pb-3">
-              {(["BUY", "RENT", "DEVELOPMENTS"] as const).map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setSearchTab(tab)}
-                  className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                    searchTab === tab
-                      ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20"
-                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                  }`}
-                >
-                  {tab === "BUY" ? "Buy" : tab === "RENT" ? "Rent" : "New Homes"}
-                </button>
-              ))}
+          {/* Clean Rightmove search box */}
+          <div className="bg-white/10 backdrop-blur-md p-4 rounded-xl shadow-2xl border border-white/20 max-w-2xl mx-auto space-y-4">
+            <div className="relative flex items-center bg-white rounded-lg overflow-hidden border border-gray-300 shadow-sm focus-within:ring-2 focus-within:ring-brand-green transition-all">
+              <div className="pl-4 text-gray-400">
+                <Search className="h-5 w-5" />
+              </div>
+              <input
+                type="text"
+                placeholder="Enter a location, neighborhood or city in Ghana..."
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                className="w-full px-3 py-4 bg-transparent text-brand-navy font-bold placeholder-gray-500 text-base focus:outline-none"
+              />
             </div>
 
-            {/* Inputs Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-              {/* Location Input */}
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
-                  Location
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. East Legon, Kumasi"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
-                />
-              </div>
-
-              {/* Property Type Dropdown */}
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
-                  Property Type
-                </label>
-                <select
-                  value={propertyType}
-                  onChange={(e) => setPropertyType(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
-                >
-                  <option value="">Any Type</option>
-                  <option value="APARTMENT">Apartment</option>
-                  <option value="HOUSE">House</option>
-                  <option value="LAND">Land</option>
-                  <option value="COMMERCIAL">Commercial</option>
-                  <option value="COMPOUND_HOUSE">Compound House</option>
-                  <option value="CHAMBER_AND_HALL">Chamber and Hall</option>
-                </select>
-              </div>
-
-              {/* Max Price Input */}
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
-                  Max Price (GHS)
-                </label>
-                <input
-                  type="number"
-                  placeholder="Any price"
-                  value={maxPrice}
-                  onChange={(e) => setMaxPrice(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
-                />
-              </div>
-
-              {/* Bedrooms Dropdown */}
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
-                  Bedrooms
-                </label>
-                <select
-                  value={bedrooms}
-                  onChange={(e) => setBedrooms(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
-                >
-                  <option value="">Any Beds</option>
-                  <option value="1">1 Bed</option>
-                  <option value="2">2 Beds</option>
-                  <option value="3">3 Beds</option>
-                  <option value="4">4 Beds</option>
-                  <option value="5">5+ Beds</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Search Submit Button */}
-            <div className="mt-4 flex sm:justify-end">
+            {/* Twin Search Buttons */}
+            <div className="grid grid-cols-2 gap-4">
               <Link
-                href={`/search?type=${searchTab === "DEVELOPMENTS" ? "SALE" : searchTab}&location=${location}&typeSelected=${propertyType}&maxPrice=${maxPrice}&beds=${bedrooms}`}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8 py-3 rounded-xl transition-all shadow-md shadow-emerald-600/10"
+                href={`/search?type=SALE&location=${encodeURIComponent(location)}`}
+                className="flex items-center justify-center bg-brand-green hover:bg-brand-green-hover text-white font-extrabold py-3.5 px-6 rounded-lg text-base shadow-md transition-all text-center"
               >
-                <Search className="h-4 w-4" />
-                Search Properties
+                For sale
+              </Link>
+              <Link
+                href={`/search?type=RENT&location=${encodeURIComponent(location)}`}
+                className="flex items-center justify-center bg-brand-green hover:bg-brand-green-hover text-white font-extrabold py-3.5 px-6 rounded-lg text-base shadow-md transition-all text-center"
+              >
+                To rent
               </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Property Type Quick Links */}
+      {/* Instant Action Banner */}
+      <section className="py-6 bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="space-y-1 text-center md:text-left">
+              <h3 className="text-base font-bold text-brand-navy">Are you a property owner or real estate agent?</h3>
+              <p className="text-xs text-gray-500">Reach thousands of home seekers in Ghana. List your apartments, houses, or land today.</p>
+            </div>
+            <Link
+              href="/dashboard/agent"
+              className="bg-brand-navy hover:bg-brand-navy/90 text-white text-xs font-bold px-6 py-2.5 rounded-lg tracking-wide uppercase transition-colors"
+            >
+              Advertise with us
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Property Type Shortcuts */}
       <section className="py-12 bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-xl mx-auto mb-8">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-bold text-brand-navy tracking-tight">
               Browse by Property Type
             </h2>
-            <p className="mt-1.5 text-sm text-gray-500">
-              Select one of our popular categories to start looking at custom listings.
+            <p className="mt-1 text-xs text-gray-500">
+              Select a category to filter listings instantly.
             </p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
@@ -252,12 +203,12 @@ export default function HomeClient({
               <Link
                 key={index}
                 href={`/search?propertyType=${pt.type}`}
-                className="flex flex-col items-center p-5 border border-gray-100 bg-gray-50/50 hover:bg-white rounded-2xl hover:shadow-lg hover:border-emerald-100 hover:-translate-y-1 transition-all duration-300 group"
+                className="flex flex-col items-center p-4 border border-gray-150 bg-gray-50/50 hover:bg-white rounded-xl hover:shadow-md hover:border-brand-green/20 transition-all duration-300 group"
               >
-                <div className="p-3 bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white rounded-xl mb-3 transition-colors duration-300">
-                  <pt.icon className="h-6 w-6 stroke-[2]" />
+                <div className="p-3 bg-brand-green/10 text-brand-green group-hover:bg-brand-green group-hover:text-white rounded-lg mb-3 transition-colors duration-300">
+                  <pt.icon className="h-5 w-5 stroke-[2.5]" />
                 </div>
-                <span className="text-sm font-bold text-gray-800 tracking-tight text-center">
+                <span className="text-xs font-bold text-brand-navy tracking-tight text-center">
                   {pt.name}
                 </span>
               </Link>
@@ -266,29 +217,28 @@ export default function HomeClient({
         </div>
       </section>
 
-      {/* Featured Properties Section */}
-      <section className="py-16">
+      {/* Featured Properties Carousel - Rightmove Clean Cards */}
+      <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-end mb-8">
             <div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-bold text-brand-navy tracking-tight">
                 Featured Properties
               </h2>
-              <p className="mt-1 text-sm text-gray-500">
-                Handpicked premium properties matching our high quality benchmarks.
+              <p className="mt-1 text-xs text-gray-500">
+                Premium properties promoted by top verified agents.
               </p>
             </div>
             <div className="hidden sm:flex gap-2">
-              <button className="h-10 w-10 border border-gray-200 bg-white hover:bg-gray-50 rounded-full flex items-center justify-center text-gray-600 active:scale-95 transition-all">
-                <ChevronLeft className="h-5 w-5" />
+              <button className="h-8 w-8 border border-gray-200 bg-white hover:bg-gray-50 rounded-full flex items-center justify-center text-gray-600 active:scale-95 transition-all">
+                <ChevronLeft className="h-4 w-4" />
               </button>
-              <button className="h-10 w-10 border border-gray-200 bg-white hover:bg-gray-50 rounded-full flex items-center justify-center text-gray-600 active:scale-95 transition-all">
-                <ChevronRight className="h-5 w-5" />
+              <button className="h-8 w-8 border border-gray-200 bg-white hover:bg-gray-50 rounded-full flex items-center justify-center text-gray-600 active:scale-95 transition-all">
+                <ChevronRight className="h-4 w-4" />
               </button>
             </div>
           </div>
 
-          {/* Carousel wrapper */}
           <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-200 -mx-4 px-4 sm:mx-0 sm:px-0">
             {featuredProperties.map((prop) => {
               const defaultImage = "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=600";
@@ -296,45 +246,42 @@ export default function HomeClient({
               return (
                 <div
                   key={prop.id}
-                  className="w-[280px] sm:w-[320px] bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm shrink-0 hover:shadow-lg transition-shadow duration-300"
+                  className="w-[280px] sm:w-[310px] bg-white rounded-xl overflow-hidden border border-gray-200 shadow-sm shrink-0 hover:shadow-md transition-shadow duration-300"
                 >
                   <Link href={`/properties/${prop.id}`}>
-                    <div className="h-48 relative bg-gray-100 cursor-pointer">
+                    <div className="h-44 relative bg-gray-100 cursor-pointer">
                       <img
                         src={coverImage}
                         alt={prop.title}
                         className="h-full w-full object-cover"
                       />
-                      <span className="absolute top-3 left-3 bg-emerald-600 text-white font-bold px-2.5 py-1 rounded-lg text-xs tracking-wider uppercase">
+                      <span className="absolute top-3 left-3 bg-brand-navy text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
                         {prop.listingType === "SALE" ? "For Sale" : "For Rent"}
-                      </span>
-                      <span className="absolute bottom-3 right-3 bg-gray-950/70 text-white font-bold px-2 py-0.5 rounded-lg text-[10px] uppercase">
-                        {prop.type.replace("_", " ")}
                       </span>
                     </div>
                   </Link>
-                  <div className="p-4 space-y-3">
-                    <div>
-                      <span className="text-xl font-black text-emerald-600">
+                  <div className="p-4 space-y-2">
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-lg font-extrabold text-brand-navy">
                         {prop.currency} {prop.price.toLocaleString()}
                       </span>
                       {prop.listingType === "RENT" && (
-                        <span className="text-xs text-gray-500 font-bold ml-1">/mo</span>
+                        <span className="text-xs text-gray-500 font-bold ml-0.5">/mo</span>
                       )}
                     </div>
                     <Link href={`/properties/${prop.id}`}>
-                      <h3 className="font-bold text-gray-900 text-sm truncate hover:text-emerald-600 transition-colors cursor-pointer" title={prop.title}>
-                        {prop.title}
+                      <h3 className="font-bold text-brand-navy text-sm truncate hover:text-brand-green transition-colors cursor-pointer" title={prop.title}>
+                        {formatPropertyTitle(prop.bedrooms, prop.type, prop.listingType)}
                       </h3>
                     </Link>
                     <p className="text-xs text-gray-500 truncate">{prop.neighborhood ? `${prop.neighborhood}, ${prop.city}` : prop.city}</p>
-                    <div className="flex items-center gap-4 text-xs font-semibold text-gray-700 border-t border-gray-50 pt-3">
+                    <div className="flex items-center gap-4 text-xs font-semibold text-gray-600 border-t border-gray-100 pt-2.5 mt-2">
                       <div className="flex items-center gap-1">
-                        <BedDouble className="h-4 w-4 text-emerald-500" />
+                        <BedDouble className="h-3.5 w-3.5 text-brand-green" />
                         {prop.bedrooms} Beds
                       </div>
                       <div className="flex items-center gap-1">
-                        <Bath className="h-4 w-4 text-emerald-500" />
+                        <Bath className="h-3.5 w-3.5 text-brand-green" />
                         {prop.bathrooms} Baths
                       </div>
                     </div>
@@ -350,60 +297,59 @@ export default function HomeClient({
       </section>
 
       {/* How It Works Section */}
-      <section className="py-16 bg-emerald-900 text-white">
+      <section className="py-16 bg-brand-navy text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="max-w-xl mx-auto mb-12">
-            <h2 className="text-3xl font-black tracking-tight">How Reltiva Works</h2>
-            <p className="mt-2 text-emerald-100 text-sm">
-              We make the process of securing a home in Ghana simple, direct, and hassle-free.
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">How Reltiva works</h2>
+            <p className="mt-2 text-gray-300 text-sm">
+              We make the property search process direct, simple, and transparent.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="p-6 bg-white/5 border border-white/10 rounded-2xl flex flex-col items-center">
-              <div className="h-12 w-12 rounded-full bg-emerald-500 flex items-center justify-center text-xl font-bold mb-4">
+            <div className="p-6 bg-white/5 border border-white/10 rounded-xl flex flex-col items-center">
+              <div className="h-10 w-10 rounded-full bg-brand-green flex items-center justify-center text-base font-extrabold mb-4">
                 1
               </div>
-              <h3 className="text-lg font-bold mb-2">Search Properties</h3>
-              <p className="text-sm text-emerald-100">
-                Filter by location, price, and amenity. Browse verified photos and detailed property features.
+              <h3 className="text-base font-bold mb-2">Search Location</h3>
+              <p className="text-xs text-gray-300 leading-relaxed">
+                Filter and browse through verified listings across Ghana with high-resolution imagery and direct pricing.
               </p>
             </div>
-            <div className="p-6 bg-white/5 border border-white/10 rounded-2xl flex flex-col items-center">
-              <div className="h-12 w-12 rounded-full bg-emerald-500 flex items-center justify-center text-xl font-bold mb-4">
+            <div className="p-6 bg-white/5 border border-white/10 rounded-xl flex flex-col items-center">
+              <div className="h-10 w-10 rounded-full bg-brand-green flex items-center justify-center text-base font-extrabold mb-4">
                 2
               </div>
-              <h3 className="text-lg font-bold mb-2">Connect Directly</h3>
-              <p className="text-sm text-emerald-100">
-                Use our direct WhatsApp buttons, phone numbers, or email forms to contact agents without middlemen fees.
+              <h3 className="text-base font-bold mb-2">Contact Directly</h3>
+              <p className="text-xs text-gray-300 leading-relaxed">
+                Skip the middlemen. Connect with verified landlords and listing agents via WhatsApp, call, or email enquiry.
               </p>
             </div>
-            <div className="p-6 bg-white/5 border border-white/10 rounded-2xl flex flex-col items-center">
-              <div className="h-12 w-12 rounded-full bg-emerald-500 flex items-center justify-center text-xl font-bold mb-4">
+            <div className="p-6 bg-white/5 border border-white/10 rounded-xl flex flex-col items-center">
+              <div className="h-10 w-10 rounded-full bg-brand-green flex items-center justify-center text-base font-extrabold mb-4">
                 3
               </div>
-              <h3 className="text-lg font-bold mb-2">Move In Securely</h3>
-              <p className="text-sm text-emerald-100">
-                Inspect your properties, agree on prices, and complete transactions following our standard safety guides.
+              <h3 className="text-base font-bold mb-2">Close Securely</h3>
+              <p className="text-xs text-gray-300 leading-relaxed">
+                Inspect physical properties, complete standard leasing/buying protocols, and move in without hassle.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Recently Listed Properties Section */}
+      {/* Recently Listed Properties Grid */}
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-xl mx-auto mb-10">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-bold text-brand-navy tracking-tight">
               Recently Listed Properties
             </h2>
-            <p className="mt-1 text-sm text-gray-500">
-              Fresh listings added by verified agents across Ghana over the past 24 hours.
+            <p className="mt-1 text-xs text-gray-500">
+              Fresh properties uploaded across major regions in Ghana over the last 24 hours.
             </p>
           </div>
 
-          {/* Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
             {recentProperties.map((prop) => {
               const defaultImage = "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=600";
@@ -411,61 +357,54 @@ export default function HomeClient({
               return (
                 <div
                   key={prop.id}
-                  className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 group"
+                  className="bg-white rounded-xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group"
                 >
-                  <div className="h-56 relative bg-gray-100">
+                  <div className="h-48 relative bg-gray-100">
                     <Link href={`/properties/${prop.id}`}>
                       <img
                         src={coverImage}
                         alt={prop.title}
-                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500 cursor-pointer"
+                        className="h-full w-full object-cover cursor-pointer"
                       />
                     </Link>
-                    <div className="absolute top-3 left-3 flex gap-2">
-                      <span className="bg-emerald-600 text-white font-bold px-2.5 py-0.5 rounded-lg text-[10px] tracking-wider uppercase">
-                        {prop.listingType === "SALE" ? "Buy" : "Rent"}
-                      </span>
-                    </div>
+                    <span className="absolute top-3 left-3 bg-brand-navy text-white text-[10px] font-bold px-2.5 py-0.5 rounded tracking-wide uppercase">
+                      {prop.listingType === "SALE" ? "Buy" : "Rent"}
+                    </span>
                     <button
                       onClick={() => toggleSave(prop.id)}
-                      className="absolute top-3 right-3 h-8 w-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center text-gray-600 transition-colors focus:outline-none z-10"
+                      className="absolute top-3 right-3 h-8 w-8 bg-white/90 hover:bg-white rounded-full flex items-center justify-center text-gray-600 transition-colors focus:outline-none z-10"
                     >
                       <Heart
-                        className={`h-4.5 w-4.5 ${
+                        className={`h-4 w-4 ${
                           savedIds.includes(prop.id)
                             ? "fill-red-500 stroke-red-500"
-                            : "stroke-gray-600"
+                            : "stroke-brand-navy"
                         }`}
                       />
                     </button>
-                    <span className="absolute bottom-3 right-3 bg-gray-950/70 text-white font-bold px-2 py-0.5 rounded-lg text-[10px] uppercase">
-                      {prop.type.replace("_", " ")}
-                    </span>
                   </div>
-                  <div className="p-5 space-y-3">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <span className="text-xl font-black text-emerald-600">
-                          {prop.currency} {prop.price.toLocaleString()}
-                        </span>
-                        {prop.listingType === "RENT" && (
-                          <span className="text-xs text-gray-500 font-bold ml-1">/mo</span>
-                        )}
-                      </div>
+                  <div className="p-4 space-y-2">
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-lg font-extrabold text-brand-navy">
+                        {prop.currency} {prop.price.toLocaleString()}
+                      </span>
+                      {prop.listingType === "RENT" && (
+                        <span className="text-xs text-gray-500 font-bold ml-0.5">/mo</span>
+                      )}
                     </div>
                     <Link href={`/properties/${prop.id}`}>
-                      <h3 className="font-bold text-gray-900 text-sm group-hover:text-emerald-600 transition-colors truncate cursor-pointer">
-                        {prop.title}
+                      <h3 className="font-bold text-brand-navy text-sm group-hover:text-brand-green transition-colors truncate cursor-pointer">
+                        {formatPropertyTitle(prop.bedrooms, prop.type, prop.listingType)}
                       </h3>
                     </Link>
                     <p className="text-xs text-gray-500 truncate">{prop.neighborhood ? `${prop.neighborhood}, ${prop.city}` : prop.city}</p>
-                    <div className="flex items-center gap-4 text-xs font-semibold text-gray-700 border-t border-gray-50 pt-3">
+                    <div className="flex items-center gap-4 text-xs font-semibold text-gray-600 border-t border-gray-100 pt-2.5 mt-2">
                       <div className="flex items-center gap-1">
-                        <BedDouble className="h-4 w-4 text-emerald-500" />
+                        <BedDouble className="h-3.5 w-3.5 text-brand-green" />
                         {prop.bedrooms} Beds
                       </div>
                       <div className="flex items-center gap-1">
-                        <Bath className="h-4 w-4 text-emerald-500" />
+                        <Bath className="h-3.5 w-3.5 text-brand-green" />
                         {prop.bathrooms} Baths
                       </div>
                     </div>
@@ -481,24 +420,84 @@ export default function HomeClient({
           <div className="flex justify-center">
             <Link
               href="/search"
-              className="flex items-center gap-2 border border-emerald-600 hover:bg-emerald-50 text-emerald-700 font-bold px-8 py-3 rounded-xl transition-colors"
+              className="flex items-center gap-1.5 border border-brand-navy hover:bg-brand-navy hover:text-white text-brand-navy font-bold px-6 py-2.5 rounded-lg text-sm transition-colors"
             >
-              View All Listings
+              View all listings
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Agent Spotlight Section */}
-      <section className="py-16 bg-white border-t border-b border-gray-100">
+      {/* Popular Locations Quick Search Grid - Rightmove Layout style */}
+      <section className="py-16 bg-white border-t border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mb-10">
+            <h2 className="text-xl sm:text-2xl font-bold text-brand-navy tracking-tight">Popular searches in Ghana</h2>
+            <p className="text-xs text-gray-500 mt-1">Explore real estate options in top hotspots and regions.</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 text-sm">
+            {/* Column 1: Accra Sales */}
+            <div className="space-y-3">
+              <h3 className="font-extrabold text-brand-navy border-b border-gray-100 pb-2">Accra Properties for Sale</h3>
+              <ul className="space-y-2 text-xs text-gray-600 font-semibold">
+                <li><Link href="/search?type=SALE&location=East+Legon" className="hover:text-brand-green transition-colors">Properties for sale in East Legon</Link></li>
+                <li><Link href="/search?type=SALE&location=Airport+Residential" className="hover:text-brand-green transition-colors">Properties for sale in Airport Residential</Link></li>
+                <li><Link href="/search?type=SALE&location=Cantonments" className="hover:text-brand-green transition-colors">Properties for sale in Cantonments</Link></li>
+                <li><Link href="/search?type=SALE&location=Spintex" className="hover:text-brand-green transition-colors">Properties for sale in Spintex</Link></li>
+                <li><Link href="/search?type=SALE&location=Tema" className="hover:text-brand-green transition-colors">Properties for sale in Tema</Link></li>
+              </ul>
+            </div>
+
+            {/* Column 2: Accra Rent */}
+            <div className="space-y-3">
+              <h3 className="font-extrabold text-brand-navy border-b border-gray-100 pb-2">Accra Properties to Rent</h3>
+              <ul className="space-y-2 text-xs text-gray-600 font-semibold">
+                <li><Link href="/search?type=RENT&location=Osu" className="hover:text-brand-green transition-colors">Properties to rent in Osu</Link></li>
+                <li><Link href="/search?type=RENT&location=Labone" className="hover:text-brand-green transition-colors">Properties to rent in Labone</Link></li>
+                <li><Link href="/search?type=RENT&location=Dzorwulu" className="hover:text-brand-green transition-colors">Properties to rent in Dzorwulu</Link></li>
+                <li><Link href="/search?type=RENT&location=Roman+Ridge" className="hover:text-brand-green transition-colors">Properties to rent in Roman Ridge</Link></li>
+                <li><Link href="/search?type=RENT&location=East+Legon" className="hover:text-brand-green transition-colors">Properties to rent in East Legon</Link></li>
+              </ul>
+            </div>
+
+            {/* Column 3: Kumasi Searches */}
+            <div className="space-y-3">
+              <h3 className="font-extrabold text-brand-navy border-b border-gray-100 pb-2">Kumasi Properties</h3>
+              <ul className="space-y-2 text-xs text-gray-600 font-semibold">
+                <li><Link href="/search?location=Ahodwo" className="hover:text-brand-green transition-colors">Properties in Ahodwo</Link></li>
+                <li><Link href="/search?location=Nhyiaeso" className="hover:text-brand-green transition-colors">Properties in Nhyiaeso</Link></li>
+                <li><Link href="/search?location=Asokwa" className="hover:text-brand-green transition-colors">Properties in Asokwa</Link></li>
+                <li><Link href="/search?location=Kwadaso" className="hover:text-brand-green transition-colors">Properties in Kwadaso</Link></li>
+                <li><Link href="/search?location=Ridge+Kumasi" className="hover:text-brand-green transition-colors">Properties in Ridge, Kumasi</Link></li>
+              </ul>
+            </div>
+
+            {/* Column 4: Other Key Regions */}
+            <div className="space-y-3">
+              <h3 className="font-extrabold text-brand-navy border-b border-gray-100 pb-2">Regions & Cities</h3>
+              <ul className="space-y-2 text-xs text-gray-600 font-semibold">
+                <li><Link href="/search?location=Takoradi" className="hover:text-brand-green transition-colors">Properties in Sekondi-Takoradi</Link></li>
+                <li><Link href="/search?location=Cape+Coast" className="hover:text-brand-green transition-colors">Properties in Cape Coast</Link></li>
+                <li><Link href="/search?location=Tamale" className="hover:text-brand-green transition-colors">Properties in Tamale</Link></li>
+                <li><Link href="/search?location=Koforidua" className="hover:text-brand-green transition-colors">Properties in Koforidua</Link></li>
+                <li><Link href="/search?location=Ho" className="hover:text-brand-green transition-colors">Properties in Ho, Volta Region</Link></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Agent Spotlight */}
+      <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-xl mx-auto mb-12">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-bold text-brand-navy tracking-tight">
               Agent Spotlight
             </h2>
-            <p className="mt-1 text-sm text-gray-500">
-              Get in touch with certified real estate agents who have active listings in Ghana.
+            <p className="mt-1 text-xs text-gray-500">
+              Get in touch with certified real estate firms active in Ghana.
             </p>
           </div>
 
@@ -506,30 +505,30 @@ export default function HomeClient({
             {topAgents.map((agent, index) => (
               <div
                 key={index}
-                className="flex flex-col items-center text-center p-6 border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow bg-gray-50/50"
+                className="flex flex-col items-center text-center p-6 border border-gray-200 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
               >
-                <div className="h-24 w-24 relative mb-4 rounded-full overflow-hidden border-2 border-emerald-500">
+                <div className="h-20 w-20 relative mb-4 rounded-full overflow-hidden border-2 border-brand-green">
                   <img
                     src={agent.avatar || "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=300"}
                     alt={agent.name}
                     className="h-full w-full object-cover"
                   />
                 </div>
-                <div className="flex items-center gap-1.5 justify-center mb-0.5">
-                  <h3 className="font-bold text-gray-900 text-base">{agent.name}</h3>
+                <div className="flex items-center gap-1 justify-center mb-0.5">
+                  <h3 className="font-bold text-brand-navy text-sm">{agent.name}</h3>
                   {agent.profile?.verified && (
-                    <CheckCircle className="h-4 w-4 text-emerald-500 fill-emerald-500" />
+                    <CheckCircle className="h-4 w-4 text-brand-green fill-brand-green/20" />
                   )}
                 </div>
-                <p className="text-xs text-gray-500 font-medium">{agent.profile?.agency || "Independent Agent"}</p>
-                <span className="inline-block mt-3 px-3 py-1 bg-emerald-50 text-emerald-700 font-bold rounded-full text-xs">
+                <p className="text-xs text-gray-500 font-semibold">{agent.profile?.agency || "Independent Broker"}</p>
+                <span className="inline-block mt-3 px-3 py-1 bg-brand-green/10 text-brand-green font-bold rounded-full text-xs">
                   {agent._count.properties} Active Listings
                 </span>
                 <Link
                   href="/search"
-                  className="mt-4 text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition-colors"
+                  className="mt-4 text-xs font-bold text-brand-navy hover:text-brand-green transition-colors"
                 >
-                  View Listings ➡️
+                  View Listings &rarr;
                 </Link>
               </div>
             ))}
